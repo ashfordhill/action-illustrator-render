@@ -1,0 +1,48 @@
+name: Self-Test
+
+on:
+  push:
+    paths:
+      - '**/*.illustrator'
+      - 'action.yml'
+      - 'Dockerfile'
+      - 'render.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/test.yml'
+  workflow_dispatch:
+    inputs:
+      format:
+        description: 'Output format'
+        required: false
+        default: 'both'
+        type: choice
+        options:
+          - svg
+          - png
+          - both
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Render .illustrator files
+        uses: ./
+        with:
+          format: ${{ inputs.format || 'both' }}
+
+      - name: Commit rendered files
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add -A
+          git diff --staged --quiet || git commit -m "test: render illustrator files [skip ci]"
+          git push

@@ -1,0 +1,31 @@
+# Local development / manual testing only.
+# The GitHub Action (action.yml) manages containers directly via docker CLI
+# and does not use this file.
+#
+# Usage:
+#   INPUT_FORMAT=both docker compose run --rm renderer
+#
+services:
+  illustrator:
+    image: "${APP_IMAGE:-ghcr.io/ashfordhill/automation-illustrator:latest}"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost/render.html || exit 1"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+
+  renderer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      illustrator:
+        condition: service_healthy
+    environment:
+      ILLUSTRATOR_URL: "http://illustrator:80"
+      INPUT_FORMAT: "${INPUT_FORMAT:-svg}"
+      INPUT_VIEWS: "${INPUT_VIEWS:-compare,before,after}"
+      INPUT_SCALE: "${INPUT_SCALE:-2}"
+      GITHUB_WORKSPACE: "/workspace"
+    volumes:
+      - "${GITHUB_WORKSPACE:-.}:/workspace"

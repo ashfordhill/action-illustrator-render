@@ -1,0 +1,107 @@
+name: 'Automation Illustrator Render'
+description: 'Scan a repository for .illustrator workflow files and render them to SVG and/or PNG.'
+author: 'ashfordhill'
+
+branding:
+  icon: 'image'
+  color: 'blue'
+
+inputs:
+  format:
+    description: 'Output format: svg, png, or both'
+    required: false
+    default: 'svg'
+  views:
+    description: 'Comma-separated views to render: compare, before, after'
+    required: false
+    default: 'compare,before,after'
+  scale:
+    description: 'PNG pixels per board pixel'
+    required: false
+    default: '2'
+  app-image:
+    description: 'Automation Illustrator image that serves render.html. Pin a sha-<commit> tag for renders that never change on their own.'
+    required: false
+    default: 'ghcr.io/ashfordhill/automation-illustrator:latest'
+
+runs:
+  using: composite
+  steps:
+    - name: Create isolated Docker network
+      shell: bash
+      env:
+        RUN_ID: ${{ github.run_id }}
+      run: docker network create "illustrator-net-${RUN_ID}" || true
+
+    - name: Start Automation Illustrator
+      shell: bash
+      env:
+        RUN_ID: ${{ github.run_id }}
+        APP_IMAGE: ${{ inputs.app-image }}
+      run: |
+        docker run -d \
+          --name "illustrator-app-${RUN_ID}" \
+          --network "illustrator-net-${RUN_ID}" \
+          "${APP_IMAGE}"
+
+    - name: Wait for render.html
+      shell: bash
+      env:
+        RUN_ID: ${{ github.run_id }}
+      run: |
+        for i in $(seq 1 60); do
+          if docker exec "illustrator-app-${RUN_ID}" \
+               wget -q --spider http://localhost:80/render.html 2>/dev/null; then
+            echo "render.html is up (attempt $i)"
+            exit 0
+          fi
+          sleep 2
+        done
+        echo "Timed out waiting for render.html"
+        docker logs "illustrator-app-${RUN_ID}"
+        exit 1
+
+    - name: Pull or build renderer image
+      shell: bash
+      env:
+        RUN_ID: ${{ github.run_id }}
+        ACTION_REPO: ${{ github.action_repository }}
+        ACTION_PATH: ${{ github.action_path }}
+      run: |
+        LOCAL_TAG="illustrator-renderer-${RUN_ID}"
+        if [ -n "${ACTION_REPO}" ] && docker pull "ghcr.io/${ACTION_REPO}/renderer:latest" 2>/dev/null; then
+          docker tag "ghcr.io/${ACTION_REPO}/renderer:latest" "${LOCAL_TAG}"
+          echo "Using pre-built renderer from GHCR"
+        else
+          echo "Building renderer locally..."
+          docker build -t "${LOCAL_TAG}" "${ACTION_PATH}"
+        fi
+
+    - name: Render .illustrator files
+      shell: bash
+      env:
+        RUN_ID: ${{ github.run_id }}
+        INPUT_FORMAT: ${{ inputs.format }}
+        INPUT_VIEWS: ${{ inputs.views }}
+        INPUT_SCALE: ${{ inputs.scale }}
+        WORKSPACE: ${{ github.workspace }}
+      run: |
+        docker run --rm \
+          --network "illustrator-net-${RUN_ID}" \
+          -e "ILLUSTRATOR_URL=http://illustrator-app-${RUN_ID}:80" \
+          -e "INPUT_FORMAT=${INPUT_FORMAT}" \
+          -e "INPUT_VIEWS=${INPUT_VIEWS}" \
+          -e "INPUT_SCALE=${INPUT_SCALE}" \
+          -e "GITHUB_WORKSPACE=/workspace" \
+          -v "${WORKSPACE}:/workspace" \
+          "illustrator-renderer-${RUN_ID}"
+
+    - name: Cleanup
+      if: always()
+      shell: bash
+      env:
+        RUN_ID: ${{ github.run_id }}
+      run: |
+        docker rm -f "illustrator-app-${RUN_ID}" || true
+        docker rmi "illustrator-renderer-${RUN_ID}" || true
+        docker network rm "illustrator-net-${RUN_ID}" || true

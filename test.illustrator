@@ -1,0 +1,403 @@
+{
+  "type": "automation-illustrator",
+  "version": 2,
+  "source": "https://github.com/ashfordhill/automation-illustrator",
+  "appearance": {
+    "orientation": "horizontal",
+    "theme": {
+      "name": "Ice",
+      "colors": {
+        "chrome": "#0c3349",
+        "chromeWell": "#07202d",
+        "chromeBtn": "#f7fcfe",
+        "chromeLine": "#5ec8e8",
+        "chromeInk": "#f3fbfe",
+        "yellow": "#e8c14a",
+        "paper": "#e8f4fa"
+      },
+      "texture": {
+        "pattern": "dots",
+        "color": "#aabec8"
+      }
+    }
+  },
+  "name": "Oak Park Invoice",
+  "actors": [
+    {
+      "id": "h_alice",
+      "kind": "human",
+      "name": "Alice",
+      "color": "#ff9fbf",
+      "role": "worker"
+    },
+    {
+      "id": "h_roy",
+      "kind": "human",
+      "name": "Roy",
+      "color": "#f4c07a",
+      "role": "worker"
+    },
+    {
+      "id": "h_jack",
+      "kind": "human",
+      "name": "Jack",
+      "color": "#5ed4a4",
+      "role": "worker"
+    },
+    {
+      "id": "h_missy",
+      "kind": "human",
+      "name": "Missy",
+      "color": "#c89bf5",
+      "role": "worker"
+    },
+    {
+      "id": "r_script",
+      "kind": "robot",
+      "name": "Script",
+      "color": "#6ab0c8",
+      "robotKind": "script",
+      "role": "Script"
+    },
+    {
+      "id": "r_llm",
+      "kind": "robot",
+      "name": "LLM",
+      "color": "#5ec4d8",
+      "robotKind": "ai",
+      "role": "LLM"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "s_read",
+      "type": "step",
+      "position": {
+        "x": 32,
+        "y": 160
+      },
+      "stepKind": "read",
+      "title": "invoice.pdf",
+      "detail": "",
+      "split": "exclusive"
+    },
+    {
+      "id": "s_web",
+      "type": "step",
+      "position": {
+        "x": 352,
+        "y": 32
+      },
+      "stepKind": "search",
+      "title": "website",
+      "detail": "",
+      "split": "exclusive"
+    },
+    {
+      "id": "s_fs",
+      "type": "step",
+      "position": {
+        "x": 352,
+        "y": 352
+      },
+      "stepKind": "search",
+      "title": "filesystem",
+      "detail": "",
+      "split": "exclusive"
+    },
+    {
+      "id": "d_acct",
+      "type": "dataField",
+      "position": {
+        "x": 672,
+        "y": 192
+      },
+      "label": "Account #"
+    },
+    {
+      "id": "s_enter",
+      "type": "step",
+      "position": {
+        "x": 864,
+        "y": 160
+      },
+      "stepKind": "write",
+      "title": "BS&A Software",
+      "detail": "invoice details",
+      "split": "exclusive"
+    },
+    {
+      "id": "s_review",
+      "type": "step",
+      "position": {
+        "x": 1184,
+        "y": 160
+      },
+      "stepKind": "review",
+      "title": "BS&A Software",
+      "detail": "",
+      "split": "exclusive"
+    },
+    {
+      "id": "s_review2",
+      "type": "step",
+      "position": {
+        "x": 1504,
+        "y": 160
+      },
+      "stepKind": "review",
+      "title": "supervisor",
+      "detail": "",
+      "split": "exclusive"
+    },
+    {
+      "id": "s_review3",
+      "type": "step",
+      "position": {
+        "x": 1824,
+        "y": 160
+      },
+      "stepKind": "review",
+      "title": "manager",
+      "detail": "",
+      "split": "exclusive"
+    }
+  ],
+  "edges": [
+    {
+      "id": "e_gt",
+      "source": "s_read",
+      "target": "s_web",
+      "label": "invoice > $50,000",
+      "dashed": true
+    },
+    {
+      "id": "e_lt",
+      "source": "s_read",
+      "target": "s_fs",
+      "label": "invoice < $50,000",
+      "dashed": true
+    },
+    {
+      "id": "e_web_acct",
+      "source": "s_web",
+      "target": "d_acct",
+      "label": "",
+      "dashed": false
+    },
+    {
+      "id": "e_fs_acct",
+      "source": "s_fs",
+      "target": "d_acct",
+      "label": "",
+      "dashed": false
+    },
+    {
+      "id": "e_acct_enter",
+      "source": "d_acct",
+      "target": "s_enter",
+      "label": "",
+      "dashed": false
+    },
+    {
+      "id": "e_enter_review",
+      "source": "s_enter",
+      "target": "s_review",
+      "label": "",
+      "dashed": false
+    },
+    {
+      "id": "e_review_2",
+      "source": "s_review",
+      "target": "s_review2",
+      "label": "",
+      "dashed": false
+    },
+    {
+      "id": "e_review_3",
+      "source": "s_review2",
+      "target": "s_review3",
+      "label": "",
+      "dashed": false
+    }
+  ],
+  "assignments": {
+    "s_read": "h_alice",
+    "s_web": "h_alice",
+    "s_fs": "h_alice",
+    "s_enter": "h_alice",
+    "s_review": "h_roy",
+    "s_review2": "h_jack",
+    "s_review3": "h_missy"
+  },
+  "after": {
+    "assignments": {},
+    "groups": [],
+    "extraNodes": [],
+    "extraEdges": [],
+    "fork": {
+      "nodes": [
+        {
+          "id": "s_read",
+          "type": "step",
+          "position": {
+            "x": 32,
+            "y": 160
+          },
+          "stepKind": "read",
+          "title": "invoice.pdf",
+          "detail": "",
+          "split": "exclusive"
+        },
+        {
+          "id": "s_web",
+          "type": "step",
+          "position": {
+            "x": 352,
+            "y": 32
+          },
+          "stepKind": "search",
+          "title": "website",
+          "detail": "",
+          "split": "exclusive"
+        },
+        {
+          "id": "s_fs",
+          "type": "step",
+          "position": {
+            "x": 352,
+            "y": 352
+          },
+          "stepKind": "search",
+          "title": "filesystem",
+          "detail": "",
+          "split": "exclusive"
+        },
+        {
+          "id": "d_acct",
+          "type": "dataField",
+          "position": {
+            "x": 672,
+            "y": 192
+          },
+          "label": "Account #"
+        },
+        {
+          "id": "s_enter",
+          "type": "step",
+          "position": {
+            "x": 864,
+            "y": 160
+          },
+          "stepKind": "write",
+          "title": "BS&A Software",
+          "detail": "invoice details",
+          "split": "exclusive"
+        },
+        {
+          "id": "s_review",
+          "type": "step",
+          "position": {
+            "x": 1184,
+            "y": 160
+          },
+          "stepKind": "review",
+          "title": "BS&A Software",
+          "detail": "",
+          "split": "exclusive"
+        },
+        {
+          "id": "s_review2",
+          "type": "step",
+          "position": {
+            "x": 1504,
+            "y": 160
+          },
+          "stepKind": "review",
+          "title": "supervisor",
+          "detail": "",
+          "split": "exclusive"
+        },
+        {
+          "id": "s_review3",
+          "type": "step",
+          "position": {
+            "x": 1824,
+            "y": 160
+          },
+          "stepKind": "review",
+          "title": "manager",
+          "detail": "",
+          "split": "exclusive"
+        }
+      ],
+      "edges": [
+        {
+          "id": "e_gt",
+          "source": "s_read",
+          "target": "s_web",
+          "label": "invoice > $50,000",
+          "dashed": true
+        },
+        {
+          "id": "e_lt",
+          "source": "s_read",
+          "target": "s_fs",
+          "label": "invoice < $50,000",
+          "dashed": true
+        },
+        {
+          "id": "e_web_acct",
+          "source": "s_web",
+          "target": "d_acct",
+          "label": "",
+          "dashed": false
+        },
+        {
+          "id": "e_fs_acct",
+          "source": "s_fs",
+          "target": "d_acct",
+          "label": "",
+          "dashed": false
+        },
+        {
+          "id": "e_acct_enter",
+          "source": "d_acct",
+          "target": "s_enter",
+          "label": "",
+          "dashed": false
+        },
+        {
+          "id": "e_enter_review",
+          "source": "s_enter",
+          "target": "s_review",
+          "label": "",
+          "dashed": false
+        },
+        {
+          "id": "e_review_2",
+          "source": "s_review",
+          "target": "s_review2",
+          "label": "",
+          "dashed": false
+        },
+        {
+          "id": "e_review_3",
+          "source": "s_review2",
+          "target": "s_review3",
+          "label": "",
+          "dashed": false
+        }
+      ],
+      "assignments": {
+        "s_read": "r_llm",
+        "s_web": "r_llm",
+        "s_fs": "r_llm",
+        "s_enter": "r_script",
+        "s_review": "h_roy",
+        "s_review2": "h_jack",
+        "s_review3": "h_missy"
+      }
+    }
+  }
+}
