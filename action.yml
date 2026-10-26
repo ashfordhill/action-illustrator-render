@@ -51,7 +51,7 @@ runs:
       run: |
         for i in $(seq 1 60); do
           if docker exec "illustrator-app-${RUN_ID}" \
-               wget -q --spider http://localhost:80/render.html 2>/dev/null; then
+               wget -q --spider http://127.0.0.1:80/render.html 2>/dev/null; then
             echo "render.html is up (attempt $i)"
             exit 0
           fi

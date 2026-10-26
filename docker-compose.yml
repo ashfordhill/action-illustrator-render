@@ -9,7 +9,7 @@ services:
   illustrator:
     image: "${APP_IMAGE:-ghcr.io/ashfordhill/automation-illustrator:latest}"
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost/render.html || exit 1"]
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/render.html || exit 1"]
       interval: 3s
       timeout: 5s
       retries: 20
